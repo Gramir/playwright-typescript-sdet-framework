@@ -11,6 +11,7 @@ The primary goal of this framework is to provide a reliable, maintainable, and c
 - **Zero Flakiness**: Eliminates race conditions and timing issues without using arbitrary sleeps (`waitForTimeout`) or brittle selectors.
 - **Linear Readability ("Ponytail Simplicity")**: Test specifications read like pure business scenarios with no low-level DOM manipulation, branching logic, or loops.
 - **Full Parallel Determinism**: High-speed test execution across isolated operating system workers with zero shared state.
+- **Continuous Quality Gate**: Integrated GitHub Actions CI/CD pipeline verifying code typing and executing test suites automatically.
 
 ---
 
@@ -23,12 +24,18 @@ In this architecture, tests import exclusively from `@fixtures/swaglabs-fixtures
 - **Centralized Lifecycle Enforcement**: Automatically injects global test isolation, cookie resets, failure reporting, and browser error monitoring.
 - **Elimination of Hook Duplication**: Setup and teardown contracts are maintained once inside fixture layers rather than scattered across test files.
 
-### 2. Lazy Page Object Loading
-All Page Objects (`loginPage`, `inventoryPage`, `cartPage`, `checkoutPage`) are exposed as fixtures.
-- **On-Demand Instantiation**: Playwright only initializes a Page Object if the test signature explicitly destructures it (e.g. `async ({ loginPage }) => { ... }`).
-- **Minimal Overhead**: Tests that only test authentication never waste CPU or memory creating inventory or checkout page instances.
+### 2. Fast Authentication Strategies: StorageState & Direct Injection
+Enterprise test suites should not repeat UI login sequences on hundreds of tests when authentication is not the feature under test. This framework demonstrates two high-performance authentication patterns:
+- **Programmatic Session Injection (`authStrategy: 'fast_injection'`)**: Injects the authenticated session cookie (`session-username`) directly into the browser context and navigates straight to `/inventory.html`. Reduces test startup overhead to sub-second speeds.
+- **Playwright `storageState` Persisted Sessions (`tests/setup/auth.setup.ts`)**: Pre-authenticates and captures complete browser storage to `.auth/user.json` for cross-test session reuse.
+- **Full UI Form Authentication (`authStrategy: 'ui'`)**: Used specifically for authentication domain tests ([Auth_Login_Success.spec.ts](file:///f:/Users/Kylenz/Documents/Work/Automatic/Playwright/Playwright%20with%20typescript/tests/swaglabs/auth/Auth_Login_Success.spec.ts)) to validate keyboard inputs, form validations, and error banners.
 
-### 3. Three-Level Page Object Model (POM) Hierarchy
+### 3. Lazy Page Object Loading
+All Page Objects (`loginPage`, `inventoryPage`, `cartPage`, `checkoutPage`) are exposed as fixtures:
+- **On-Demand Instantiation**: Playwright only initializes a Page Object if the test signature explicitly destructures it (e.g. `async ({ loginPage }) => { ... }`).
+- **Minimal Overhead**: Tests that only test inventory or checkout never waste CPU or memory instantiating unused pages.
+
+### 4. Three-Level Page Object Model (POM) Hierarchy
 Page Objects adhere to a strict 3-tier inheritance chain:
 ```
 Level 1: pages/shared/BasePage.ts
@@ -39,28 +46,28 @@ Level 1: pages/shared/BasePage.ts
 - **Level 2 (`swaglabs/BasePage`)**: Application-specific infrastructure (React SPA loading synchronization, shared global header and sidebar access).
 - **Level 3 (`LoginPage`, `InventoryPage`, `CartPage`, `CheckoutPage`)**: Concrete business domains exposing user actions and web-first assertions.
 
-### 4. Component Object Pattern
+### 5. Component Object Pattern
 Complex, repetitive, or embedded widgets (`HeaderComponent`, `SidebarComponent`, `ProductCardComponent`) are abstracted into component classes:
 - Prevents DOM selector leakage into Page Objects.
 - Promotes reuse: the same `HeaderComponent` is accessible across all Swag Labs pages.
 
-### 5. Dynamic Getters for Locators
+### 6. Dynamic Getters for Locators
 All element locators in Page and Component Objects are declared as **dynamic getters** (e.g., `get usernameInput(): Locator`):
 - Avoids stale element reference errors by allowing Playwright to re-evaluate the DOM at the exact moment of action or assertion.
 - Prohibits storing static `Locator` properties that risk referencing detached DOM nodes after page re-renders.
 
-### 6. Auto-Fixtures as Quality Guards
+### 7. Auto-Fixtures as Quality Guards
 - **`configureSnapshot`**: Resets cookies and storage before every test, enforcing hermetic isolation.
 - **`consoleErrors`**: Attaches an event listener to `pageerror` and immediately fails the test if unhandled client-side JavaScript exceptions are emitted in the browser console.
 - **`serverLogs`**: Automatically captures browser logs and attaches them as diagnostic artifacts in test reports when failures occur.
 - **`authenticatedSession`**: Manages automated authentication when tests declare `test.use({ userRole: 'standard_user' })`.
 
-### 7. One Test Per File (`.spec.ts`)
+### 8. One Test Per File (`.spec.ts`)
 Each `.spec.ts` file contains exactly **one** `test()` block:
 - Enables Playwright to run tests across independent OS worker processes without test-order dependencies or cross-test memory retention.
 - Prevents cumulative state pollution between scenarios.
 
-### 8. Strict TypeScript Typing
+### 9. Strict TypeScript Typing
 - Configured with `"strict": true` and module resolution path aliases (`@pages/*`, `@fixtures/*`, `@data/*`, `@components/*`, `@utils/*`).
 - Static datasets (`users.json`, `snapshots.json`) are mapped to TypeScript types using `keyof typeof` in `data/types.ts` to prevent runtime string typos and guarantee compile-time safety.
 
@@ -69,6 +76,9 @@ Each `.spec.ts` file contains exactly **one** `test()` block:
 ## 📁 Repository Structure
 
 ```text
+├── .github/
+│   └── workflows/
+│       └── e2e.yml                              # GitHub Actions CI/CD workflow
 ├── data/
 │   ├── snapshots.json                           # Snapshot configuration catalogue
 │   ├── swaglabs/
@@ -76,7 +86,7 @@ Each `.spec.ts` file contains exactly **one** `test()` block:
 │   └── types.ts                                 # Derived TypeScript types (keyof typeof)
 ├── fixtures/
 │   ├── base-fixtures.ts                         # Auto-fixtures (snapshot, consoleErrors, serverLogs)
-│   └── swaglabs-fixtures.ts                     # Project fixtures (lazy POMs, authenticatedSession)
+│   └── swaglabs-fixtures.ts                     # Project fixtures (lazy POMs, fast auth injection)
 ├── pages/
 │   ├── shared/
 │   │   └── BasePage.ts                          # POM Level 1: Universal abstract base
@@ -95,11 +105,15 @@ Each `.spec.ts` file contains exactly **one** `test()` block:
 │           ├── SidebarComponent.ts              # Component: Hamburger menu & navigation
 │           └── ProductCardComponent.ts          # Component: Individual product cards
 ├── tests/
+│   ├── setup/
+│   │   └── auth.setup.ts                        # StorageState generation script
 │   └── swaglabs/
 │       ├── seed.spec.ts                         # Reference template (ignored by test runner)
 │       ├── auth/
 │       │   ├── Auth_Login_Success.spec.ts       # Test: Successful login with standard_user
 │       │   └── Auth_Login_LockedUser.spec.ts    # Test: Locked user access denial banner
+│       ├── inventory/
+│       │   └── Inventory_FastAuth_Storage.spec.ts # Test: Instant access via session injection
 │       └── checkout/
 │           └── Checkout_CompleteFlow_Success.spec.ts # Test: End-to-end purchasing flow
 ├── utils/
@@ -145,11 +159,6 @@ Run tests on Chromium:
 npx playwright test --project=chromium
 ```
 
-Run a specific test in headed mode:
-```bash
-npx playwright test tests/swaglabs/checkout/Checkout_CompleteFlow_Success.spec.ts --headed
-```
-
 Run in interactive UI Mode:
 ```bash
 npx playwright test --ui
@@ -169,3 +178,14 @@ All accounts share the default password `secret_sauce`:
 | `performance_glitch_user` | `performance_glitch_user` | Latency and timeout threshold testing |
 | `error_user` | `error_user` | Client-side error handling |
 | `visual_user` | `visual_user` | Visual layout testing |
+
+---
+
+## 🔄 CI/CD Pipeline (GitHub Actions)
+
+This repository includes a production-ready CI pipeline configured in `.github/workflows/e2e.yml`:
+1. Triggers on every `push` and `pull_request` to `main` and `master`.
+2. Sets up Node.js with automated npm caching.
+3. Enforces strict TypeScript compile validation (`npm run typecheck`).
+4. Executes tests in parallel across headless Chromium.
+5. Archives and uploads Playwright HTML reports on every build.

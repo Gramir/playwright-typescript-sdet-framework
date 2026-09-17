@@ -4,10 +4,14 @@ import { InventoryPage } from '@pages/swaglabs/inventory/InventoryPage';
 import { CartPage } from '@pages/swaglabs/cart/CartPage';
 import { CheckoutPage } from '@pages/swaglabs/checkout/CheckoutPage';
 import { usersData } from '@data/types';
+import { getWorkerBaseUrl } from '@utils/worker-url';
 import type { SwagUserRole } from '@data/types';
+
+export type AuthStrategy = 'ui' | 'fast_injection';
 
 export interface SwagLabsFixturesOptions {
   userRole?: SwagUserRole;
+  authStrategy?: AuthStrategy;
 }
 
 export interface SwagLabsFixtures {
@@ -20,20 +24,35 @@ export interface SwagLabsFixtures {
 
 export const test = baseTest.extend<SwagLabsFixtures & SwagLabsFixturesOptions>({
   userRole: [undefined, { option: true }],
+  authStrategy: ['ui', { option: true }],
 
   authenticatedSession: [
-    async ({ userRole, loginPage, inventoryPage }, use) => {
+    async ({ page, context, userRole, authStrategy, loginPage, inventoryPage }, use) => {
       if (userRole) {
         const credentials = usersData[userRole];
         if (!credentials) {
           throw new Error(`[Auth] User role "${userRole}" not found in data/swaglabs/users.json`);
         }
 
-        await loginPage.goto();
-        await loginPage.login(credentials.username, credentials.password);
-
-        if (userRole !== 'locked_out_user') {
+        if (authStrategy === 'fast_injection' && userRole !== 'locked_out_user') {
+          const domain = new URL(getWorkerBaseUrl()).hostname;
+          await context.addCookies([
+            {
+              name: 'session-username',
+              value: credentials.username,
+              domain: domain,
+              path: '/',
+            },
+          ]);
+          await inventoryPage.navigateTo('/inventory.html');
           await inventoryPage.assertIsLoaded();
+        } else {
+          await loginPage.goto();
+          await loginPage.login(credentials.username, credentials.password);
+
+          if (userRole !== 'locked_out_user') {
+            await inventoryPage.assertIsLoaded();
+          }
         }
       }
 
