@@ -1,5 +1,10 @@
 # Swag Labs E2E Automation Framework
 
+[![Playwright E2E Tests](https://github.com/Gramir/playwright-typescript-sdet-framework/actions/workflows/e2e.yml/badge.svg?branch=master)](https://github.com/Gramir/playwright-typescript-sdet-framework/actions/workflows/e2e.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.49-green?logo=playwright&logoColor=white)](https://playwright.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-darkgreen?logo=node.js&logoColor=white)](https://nodejs.org/)
+
 An enterprise-grade End-to-End (E2E) test automation framework for [Swag Labs](https://www.saucedemo.com/) built with **Playwright** and **TypeScript**.
 
 ---
