@@ -28,7 +28,7 @@ export class BasePage extends SharedBasePage {
   async waitForAppToLoad(): Promise<void> {
     await expect(this.rootContainer).toBeVisible();
     const spinner = this.page.getByTestId('dynamic-catalog-spinner');
-    if (await spinner.count() > 0) {
+    if ((await spinner.count()) > 0) {
       await expect(spinner).toBeHidden();
     }
   }
