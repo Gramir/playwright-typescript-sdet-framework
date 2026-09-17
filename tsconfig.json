@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pages/*": ["./pages/*"],
+      "@fixtures/*": ["./fixtures/*"],
+      "@data/*": ["./data/*"],
+      "@components/*": ["./pages/swaglabs/components/*"],
+      "@utils/*": ["./utils/*"]
+    }
+  },
+  "include": [
+    "pages/**/*",
+    "fixtures/**/*",
+    "data/**/*",
+    "tests/**/*",
+    "utils/**/*",
+    "playwright.config.ts",
+    "globalSetup.ts",
+    "utils.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

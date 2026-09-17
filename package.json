@@ -1,0 +1,25 @@
+{
+  "name": "swaglabs-playwright-typescript",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Enterprise SDET E2E Automation Framework for Swag Labs using Playwright and TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test"
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "sdet",
+    "e2e-testing",
+    "swaglabs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

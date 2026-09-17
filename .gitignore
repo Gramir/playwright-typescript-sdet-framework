@@ -1,0 +1,23 @@
+# Dependency directories
+node_modules/
+
+# Playwright artifacts and reports
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Operating System and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+# AI Agent Governance & Skills (Excluded from version control)
+.agents/

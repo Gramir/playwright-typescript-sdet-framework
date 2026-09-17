@@ -1,0 +1,32 @@
+{
+  "standard_user": {
+    "username": "standard_user",
+    "password": "secret_sauce",
+    "description": "Standard user with full access and valid behavior"
+  },
+  "locked_out_user": {
+    "username": "locked_out_user",
+    "password": "secret_sauce",
+    "description": "Locked out account used for access denial validations"
+  },
+  "problem_user": {
+    "username": "problem_user",
+    "password": "secret_sauce",
+    "description": "Account with buggy UI asset mapping"
+  },
+  "performance_glitch_user": {
+    "username": "performance_glitch_user",
+    "password": "secret_sauce",
+    "description": "Account exhibiting artificial latency in page loads"
+  },
+  "error_user": {
+    "username": "error_user",
+    "password": "secret_sauce",
+    "description": "Account triggering client-side errors on actions"
+  },
+  "visual_user": {
+    "username": "visual_user",
+    "password": "secret_sauce",
+    "description": "Account with visual alignment anomalies"
+  }
+}

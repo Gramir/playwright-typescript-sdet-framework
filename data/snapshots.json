@@ -1,0 +1,10 @@
+{
+  "clean_state": {
+    "description": "Clean browser state with cleared local storage and session cookies",
+    "requiresDatabaseRestore": false
+  },
+  "default_state": {
+    "description": "Standard baseline catalog and active inventory session",
+    "requiresDatabaseRestore": false
+  }
+}
