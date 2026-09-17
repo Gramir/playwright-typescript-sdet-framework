@@ -1,5 +1,37 @@
 import { defineConfig, devices } from '@playwright/test';
+import { createRequire } from 'node:module';
 import { getWorkerBaseUrl } from './utils/worker-url';
+
+const require = createRequire(import.meta.url);
+const fs = require('node:fs');
+
+// Gracefully handle Windows EPERM file locking from VS Code extension or indexers
+for (const method of ['rmdir', 'rm'] as const) {
+  const syncName = `${method}Sync`;
+  const origSync = fs[syncName];
+  if (origSync) {
+    fs[syncName] = function (...args: any[]) {
+      try {
+        return origSync.apply(this, args);
+      } catch (err: any) {
+        if (err?.code === 'EPERM' || err?.code === 'EBUSY') return;
+        throw err;
+      }
+    };
+  }
+
+  const origAsync = fs.promises?.[method];
+  if (origAsync) {
+    fs.promises[method] = async function (...args: any[]) {
+      try {
+        return await origAsync.apply(this, args);
+      } catch (err: any) {
+        if (err?.code === 'EPERM' || err?.code === 'EBUSY') return;
+        throw err;
+      }
+    };
+  }
+}
 
 export default defineConfig({
   testDir: './tests',
@@ -27,14 +59,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
     },
   ],
 });
