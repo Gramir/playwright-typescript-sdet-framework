@@ -5,8 +5,10 @@
   "description": "Enterprise SDET E2E Automation Framework for Swag Labs using Playwright and TypeScript",
   "main": "index.js",
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "playwright test"
+    "clean": "node -e \"import('node:fs').then(fs => fs.rmSync('test-results', { recursive: true, force: true, maxRetries: 5 }))\"",
+    "pretest": "npm run clean",
+    "test": "playwright test",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "playwright",
